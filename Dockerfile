@@ -1,11 +1,13 @@
 FROM node:14-stretch
 
+RUN npm install -g nodemon
+
 USER node
 
 WORKDIR /home/node
 
 COPY --chown=node:node app .
 
-RUN npm install
+RUN npm ci
 
-CMD ["node", "server.js"]
+CMD ["nodemon", "server.js"]
