@@ -2,7 +2,7 @@
 
 const express = require('express');
 const app = express();
-// const querystring = require('querystring');
+const fs = require('fs');
 
 const { MongoClient } = require("mongodb");
 const url = process.env.MONGO_CONNECTION_STRING || "mongodb://localhost:27017";
@@ -12,10 +12,25 @@ const collectionName = "words";
 const baseURL = '/api/v1';
 const port = 3000;
 
+const populateDB = async (words) => {
+    try {
+        const data = fs.readFileSync('common-words.json');
+        const wordJSON = JSON.parse(data);
+        await words.insertMany(wordJSON);
+    } catch(err) {
+        console.log(`Error attempting to populate database: ${err.message}`);
+    }
+};
+
 async function start() {
     const client = await MongoClient.connect(url);
     const db = client.db(dbName);
     const words = db.collection(collectionName);
+
+    const numWords = await words.countDocuments();
+    if(numWords === 0) {
+        populateDB(words);
+    }
 
     app.get(baseURL + "/test", (req, res) => {
         res.json({'message': 'API test success!'});
@@ -31,24 +46,19 @@ async function start() {
 
     app.get(baseURL + "/search", (req, res) => {
         const origin = req.get('origin');
-
-        console.log(origin);
-
         const searchTerm = req.query.q;
         const re = `^${searchTerm}`;
         const searchRegex = new RegExp(re, 'gi');
         const searchLimit = req.query.limit || 8;
-        console.log(searchTerm);
         
         // when developing the frontend with parcel build, allow that origin
-        if(origin === 'http://localhost:1234') res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Origin', origin);
 
         words.find({
             "word": { $regex: searchRegex }
         }, {"word": true})
             .limit(searchLimit)
             .toArray( (err, docs) => {
-                res.header('Access-Control-Allow-Origin', origin);
                 if(err) return res.send(err.message);
                 res.send(docs);
             });
