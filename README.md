@@ -15,4 +15,6 @@ To test the API, run `curl --location --request GET 'http://localhost:3000/api/v
 ## Running the frontend application
 The frontend is built with React and uses Parcel to build. Change directories into `ui` and run `npm run dev`.
 
+The application is then available at `http://localhost:1234`.
+
 Type any word in the input box and suggestions should pop up. Use `Tab` to navigate to one and `Enter` to select. `Esc` can be used to cancel the search.
